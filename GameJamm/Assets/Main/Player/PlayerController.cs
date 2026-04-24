@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour
     public float mouseSensitivity = 0.2f;
     public float maxLookAngle = 85f;
     private float xRotation = 0f;
+    private float yRotation = 0f;
 
     [Header("Eğilme Ayarları (Crouch)")]
     public float crouchHeight = 1f;
@@ -73,6 +74,8 @@ public class PlayerController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
+        yRotation = transform.eulerAngles.y;
+
         SetupInputs();
     }
 
@@ -121,17 +124,17 @@ public class PlayerController : MonoBehaviour
         crouchAction.Disable();
     }
 
-    void Update()
-    {
-        Look();
-        CheckGrounded();
-        HandleStamina();
-        HandleCameraCrouch();
-    }
-
     void FixedUpdate()
     {
+        CheckGrounded();
         Move();
+        HandleStamina();
+    }
+
+    void LateUpdate()
+    {
+        Look();
+        HandleCameraCrouch();
     }
 
     private void Move()
@@ -173,6 +176,7 @@ public class PlayerController : MonoBehaviour
 
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -maxLookAngle, maxLookAngle);
+        yRotation += mouseX;
 
         if (cameraTransform != null)
         {
@@ -181,7 +185,10 @@ public class PlayerController : MonoBehaviour
         }
         
         // Karakteri sağa/sola döndür
-        transform.Rotate(Vector3.up * mouseX);
+        // Fizik motoru ile çakışmayı (jitter/lag) önlemek için hem transform hem de rb rotasyonunu aynı anda güncelliyoruz.
+        Quaternion targetRotation = Quaternion.Euler(0f, yRotation, 0f);
+        transform.rotation = targetRotation;
+        rb.rotation = targetRotation;
     }
 
     private void Jump()
