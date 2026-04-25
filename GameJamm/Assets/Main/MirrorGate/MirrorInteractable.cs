@@ -8,7 +8,7 @@ public class MirrorInteractable : MonoBehaviour, IInteractable
     {
         if (parentMirror != null)
         {
-            parentMirror.Interact(interactor);
+            parentMirror.InteractWithJoint(interactor, this.gameObject);
         }
     }
 
@@ -16,7 +16,7 @@ public class MirrorInteractable : MonoBehaviour, IInteractable
     {
         if (parentMirror != null)
         {
-            parentMirror.SetHighlight(state);
+            parentMirror.SetHighlightForJoint(state, this.gameObject);
         }
     }
 }

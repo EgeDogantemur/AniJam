@@ -6,7 +6,8 @@ public class MirrorItem
 {
     [Tooltip("Envanterdeki objenin Unity Tag'i")]
     public string targetTag; 
-    public GameObject targetObject;
+    public GameObject targetObjectA;
+    public GameObject targetObjectB;
 }
 
 public class Mirror : MonoBehaviour
@@ -14,43 +15,48 @@ public class Mirror : MonoBehaviour
     [Header("Mirror Ayarları")]
     public MirrorItem[] mirrorItems;
     public GameObject wallObject;
-    [Tooltip("Collider'ı olan ve etkileşime girilecek obje")]
-    public GameObject joint;
+    [Tooltip("Collider'ı olan ve etkileşime girilecek obje A")]
+    public GameObject jointA;
+    [Tooltip("Collider'ı olan ve etkileşime girilecek obje B")]
+    public GameObject jointB;
     
     [Header("Outline Ayarları")]
     public Color outlineColor = Color.yellow;
     [Range(0f, 0.1f)]
     public float outlineThickness = 0.02f;
-     private GameObject outlineObject;
-    private bool isHighlighted = false;
+    private GameObject outlineObjectA;
+    private GameObject outlineObjectB;
+    private bool isHighlightedA = false;
+    private bool isHighlightedB = false;
     
     // Joint üzerinde duran objeyi takip etmek için
     private GameObject mountedObject = null;
     
     void Start()
     {
-        SetupJoint();
+        outlineObjectA = SetupJoint(jointA);
+        outlineObjectB = SetupJoint(jointB);
     }
     
-    private void SetupJoint()
+    private GameObject SetupJoint(GameObject currentJoint)
     {
-        if (joint == null) return;
+        if (currentJoint == null) return null;
         
         // Joint objesinin üzerine IInteractable arayüzünü ekleyerek PlayerInteract'a görünür yapıyoruz
-        MirrorInteractable interactable = joint.AddComponent<MirrorInteractable>();
+        MirrorInteractable interactable = currentJoint.AddComponent<MirrorInteractable>();
         interactable.parentMirror = this;
 
-        Collider col = joint.GetComponent<Collider>();
-        if (col == null) return;
+        Collider col = currentJoint.GetComponent<Collider>();
+        if (col == null) return null;
 
-        outlineObject = new GameObject("OutlineEffect");
-        outlineObject.transform.SetParent(joint.transform, false);
-        outlineObject.transform.localPosition = Vector3.zero;
-        outlineObject.transform.localRotation = Quaternion.identity;
-        outlineObject.transform.localScale = Vector3.one;
+        GameObject newOutline = new GameObject("OutlineEffect");
+        newOutline.transform.SetParent(currentJoint.transform, false);
+        newOutline.transform.localPosition = Vector3.zero;
+        newOutline.transform.localRotation = Quaternion.identity;
+        newOutline.transform.localScale = Vector3.one;
 
         // Çizgi (Edge) outline için LineRenderer kullanıyoruz
-        LineRenderer lr = outlineObject.AddComponent<LineRenderer>();
+        LineRenderer lr = newOutline.AddComponent<LineRenderer>();
         lr.useWorldSpace = false;
         lr.startWidth = outlineThickness;
         lr.endWidth = outlineThickness;
@@ -111,20 +117,27 @@ public class Mirror : MonoBehaviour
             lr.SetPosition(i, corners[path[i]]);
         }
 
-        outlineObject.SetActive(false);
+        newOutline.SetActive(false);
+        return newOutline;
     }
 
-    public void SetHighlight(bool state)
+    public void SetHighlightForJoint(bool state, GameObject interactedJoint)
     {
-        if (isHighlighted == state) return;
-        isHighlighted = state;
-        if (outlineObject != null)
+        if (interactedJoint == jointA)
         {
-            outlineObject.SetActive(state);
+            if (isHighlightedA == state) return;
+            isHighlightedA = state;
+            if (outlineObjectA != null) outlineObjectA.SetActive(state);
+        }
+        else if (interactedJoint == jointB)
+        {
+            if (isHighlightedB == state) return;
+            isHighlightedB = state;
+            if (outlineObjectB != null) outlineObjectB.SetActive(state);
         }
     }
 
-    public void Interact(GameObject interactor)
+    public void InteractWithJoint(GameObject interactor, GameObject interactedJoint)
     {
         BasicInventorySystem inventory = interactor.GetComponent<BasicInventorySystem>();
         if (inventory != null)
@@ -151,8 +164,8 @@ public class Mirror : MonoBehaviour
                         
                         foreach (var mItem in mirrorItems)
                         {
-                            if (mItem.targetObject != null)
-                                mItem.targetObject.SetActive(false);
+                            if (interactedJoint == jointA && mItem.targetObjectA != null) mItem.targetObjectA.SetActive(false);
+                            if (interactedJoint == jointB && mItem.targetObjectB != null) mItem.targetObjectB.SetActive(false);
                         }
                     }
                     else
@@ -169,13 +182,17 @@ public class Mirror : MonoBehaviour
                     {
                         foreach (var mItem in mirrorItems)
                         {
-                            if (mItem.targetObject != null)
-                                mItem.targetObject.SetActive(false);
+                            if (interactedJoint == jointA && mItem.targetObjectA != null) mItem.targetObjectA.SetActive(false);
+                            if (interactedJoint == jointB && mItem.targetObjectB != null) mItem.targetObjectB.SetActive(false);
                         }
                         
-                        if (mirrorItems[matchIndex].targetObject != null)
+                        if (interactedJoint == jointA && mirrorItems[matchIndex].targetObjectA != null)
                         {
-                            mirrorItems[matchIndex].targetObject.SetActive(true);
+                            mirrorItems[matchIndex].targetObjectA.SetActive(true);
+                        }
+                        else if (interactedJoint == jointB && mirrorItems[matchIndex].targetObjectB != null)
+                        {
+                            mirrorItems[matchIndex].targetObjectB.SetActive(true);
                         }
 
                         GameObject item = heldObj;
@@ -192,7 +209,7 @@ public class Mirror : MonoBehaviour
                             mountedObject = null;
                         }
                         
-                        MountObjectToJoint(item);
+                        MountObjectToJoint(item, interactedJoint);
 
                         if (wallObject != null) wallObject.SetActive(false);
                     }
@@ -209,13 +226,17 @@ public class Mirror : MonoBehaviour
                     {
                         foreach (var mItem in mirrorItems)
                         {
-                            if (mItem.targetObject != null)
-                                mItem.targetObject.SetActive(false);
+                            if (interactedJoint == jointA && mItem.targetObjectA != null) mItem.targetObjectA.SetActive(false);
+                            if (interactedJoint == jointB && mItem.targetObjectB != null) mItem.targetObjectB.SetActive(false);
                         }
                         
-                        if (mirrorItems[matchIndex].targetObject != null)
+                        if (interactedJoint == jointA && mirrorItems[matchIndex].targetObjectA != null)
                         {
-                            mirrorItems[matchIndex].targetObject.SetActive(true);
+                            mirrorItems[matchIndex].targetObjectA.SetActive(true);
+                        }
+                        else if (interactedJoint == jointB && mirrorItems[matchIndex].targetObjectB != null)
+                        {
+                            mirrorItems[matchIndex].targetObjectB.SetActive(true);
                         }
 
                         GameObject item = heldObj;
@@ -223,7 +244,7 @@ public class Mirror : MonoBehaviour
                         inventory.inventorySlots[selIndex] = null;
                         inventory.SetSelectedSlot(selIndex);
 
-                        MountObjectToJoint(item);
+                        MountObjectToJoint(item, interactedJoint);
 
                         if (wallObject != null) wallObject.SetActive(false);
                     }
@@ -244,13 +265,13 @@ public class Mirror : MonoBehaviour
         return -1;
     }
 
-    private void MountObjectToJoint(GameObject item)
+    private void MountObjectToJoint(GameObject item, GameObject interactedJoint)
     {
         mountedObject = item;
         mountedObject.SetActive(true);
-        mountedObject.transform.SetParent(joint.transform);
-        mountedObject.transform.position = joint.transform.position;
-        mountedObject.transform.rotation = joint.transform.rotation;
+        mountedObject.transform.SetParent(interactedJoint.transform);
+        mountedObject.transform.position = interactedJoint.transform.position;
+        mountedObject.transform.rotation = interactedJoint.transform.rotation;
         
         Rigidbody[] rbs = mountedObject.GetComponentsInChildren<Rigidbody>();
         foreach (var rb in rbs) rb.isKinematic = true;
