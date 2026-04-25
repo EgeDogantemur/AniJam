@@ -49,6 +49,9 @@ public class PlayerController : MonoBehaviour
     private bool isSprinting;
     private bool isCrouching;
 
+    [Header("Room Settings")]
+    public int inRoom;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
