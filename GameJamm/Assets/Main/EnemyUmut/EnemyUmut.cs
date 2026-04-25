@@ -211,20 +211,23 @@ public class EnemyUmut : MonoBehaviour
 
         if (canSeePlayerViaRay)
         {
-            if (currentState != EnemyState.Chasing)
+            if (currentState == EnemyState.Investigating)
             {
-                // Eğer kovalama durumunda değilsek, farkındalık alanında (trigger) olup olmadığına bak
+                // Araştırma (bekleme) modundayken AwarenessArea'ya BAKILMAZ.
+                // Sadece Ray'in oyuncuya değmesi kovalamaya "devam etmek" için yeterlidir.
+                currentState = EnemyState.Chasing;
+                if (currentControlObject != null) Destroy(currentControlObject);
+            }
+            else if (currentState != EnemyState.Chasing)
+            {
+                // Normal devriye veya odada bekleme modundayken agrolanmak için AwarenessArea'ya girmesi şarttır.
                 if (isPlayerInAwarenessArea)
                 {
-                    // Trigger'da, agroyu al
                     currentState = EnemyState.Chasing;
-                    if (currentControlObject != null)
-                    {
-                        Destroy(currentControlObject);
-                    }
+                    if (currentControlObject != null) Destroy(currentControlObject);
                 }
             }
-            // Zaten agrolu ise ray kesilene kadar kovalama devam eder
+            // Zaten Chasing (kovalama) durumundaysa ray kesilene kadar devam eder
         }
         else if (currentState == EnemyState.Chasing)
         {
@@ -233,6 +236,8 @@ public class EnemyUmut : MonoBehaviour
             currentState = EnemyState.Investigating;
             investigateTimer = 0f;
         }
+
+        Debug.Log("Can see player: " + canSeePlayerViaRay);
     }
 
     private void HandleChasing()
