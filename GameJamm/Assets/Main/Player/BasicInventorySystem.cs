@@ -18,10 +18,14 @@ public class BasicInventorySystem : MonoBehaviour
     public int selectedSlotIndex = 0;
     public string heldItem = "";
 
+    public Camera playerCamera; // Referans atanmazsa otomatik bulunur
+    private GameObject currentlyShownItem = null;
+
     void Awake()
     {
-        // Envanteri belirlenen maksimum boyuta göre oluştur
         inventorySlots = new GameObject[maxInventorySize];
+        if (playerCamera == null) playerCamera = GetComponentInChildren<Camera>();
+        if (playerCamera == null) playerCamera = Camera.main;
     }
 
     void OnEnable()
@@ -44,33 +48,30 @@ public class BasicInventorySystem : MonoBehaviour
 
     private void HandleInput()
     {
-        // Eşya atma işlemi kontrolü
         if (dropItemAction.WasPressedThisFrame())
         {
             DropSelectedItem();
         }
 
-        // 1. InputAction üzerinden etkileşim kontrolü (Örn: Fare tekerleği veya özel buton)
         if (changeSlotAction.triggered)
         {
             var value = changeSlotAction.ReadValueAsObject();
-            if (value is Vector2 vec2 && vec2.y != 0) // Scroll wheel
+            if (value is Vector2 vec2 && vec2.y != 0) 
             {
                 int newIndex = selectedSlotIndex + (vec2.y > 0 ? 1 : -1);
                 SetSelectedSlot(newIndex);
             }
-            else if (value is float fVal && fVal != 0) // 1D Axis
+            else if (value is float fVal && fVal != 0) 
             {
                 int newIndex = selectedSlotIndex + (fVal > 0 ? 1 : -1);
                 SetSelectedSlot(newIndex);
             }
-            else // Sadece bir Butonsa (Değer okumuyorsa)
+            else 
             {
                 SetSelectedSlot(selectedSlotIndex + 1);
             }
         }
 
-        // 2. Klavyenin üstündeki sayı tuşları ile kontrol (1 -> 0, 6 -> 5 vs.)
         if (Keyboard.current != null)
         {
             if (Keyboard.current.digit1Key.wasPressedThisFrame) SetSelectedSlot(0);
@@ -86,7 +87,6 @@ public class BasicInventorySystem : MonoBehaviour
         }
     }
 
-    // Boş ilk envanter slotuna eşya alabilme
     public bool AddItem(GameObject item)
     {
         for (int i = 0; i < maxInventorySize; i++)
@@ -95,20 +95,18 @@ public class BasicInventorySystem : MonoBehaviour
             {
                 inventorySlots[i] = item;
                 
-                // Eşya envantere alındığında dünyada gizle ve parent olarak ayarla
                 item.SetActive(false); 
                 item.transform.SetParent(transform); 
                 
                 UpdateHeldItem();
-                return true; // Eşya başarıyla eklendi
+                return true; 
             }
         }
         
         Debug.Log("Envanter dolu!");
-        return false; // Boş yer yok
+        return false; 
     }
 
-    // Seçili envanter slotundan eşya atabilme
     public void DropSelectedItem()
     {
         if (selectedSlotIndex >= 0 && selectedSlotIndex < maxInventorySize)
@@ -118,22 +116,31 @@ public class BasicInventorySystem : MonoBehaviour
                 GameObject droppedItem = inventorySlots[selectedSlotIndex];
                 inventorySlots[selectedSlotIndex] = null;
 
-                // Eşyayı dünyada tekrar görünür yap ve parent'ını kaldır
+                if (droppedItem == currentlyShownItem) currentlyShownItem = null;
+
                 droppedItem.SetActive(true);
                 droppedItem.transform.SetParent(null);
                 
-                // Yere atılan eşyayı karakterin biraz önüne yerleştir
-                droppedItem.transform.position = transform.position + transform.forward * 0.1f + Vector3.up * 1f;
+                // Yere atıldığında fizik ve collider'ları geri aç
+                Collider[] cols = droppedItem.GetComponentsInChildren<Collider>();
+                foreach (var c in cols) c.enabled = true;
+                
+                Rigidbody[] rbs = droppedItem.GetComponentsInChildren<Rigidbody>();
+                foreach (var r in rbs) r.isKinematic = false;
+                
+                if (playerCamera != null) {
+                    droppedItem.transform.position = playerCamera.transform.position + playerCamera.transform.forward * 0.2f;
+                } else {
+                    droppedItem.transform.position = transform.position + transform.forward * 0.2f + Vector3.up * 1f;
+                }
 
                 UpdateHeldItem();
             }
         }
     }
 
-    // Seçili slotu değiştirmek için kullanılabilir
     public void SetSelectedSlot(int index)
     {
-        // Sınırları aştığında başa veya sona sarması için (Wrap around)
         if (index < 0) index = maxInventorySize - 1;
         if (index >= maxInventorySize) index = 0;
 
@@ -141,16 +148,47 @@ public class BasicInventorySystem : MonoBehaviour
         UpdateHeldItem();
     }
 
-    // Seçili envanter slotunda eşya varsa "heldItem" değişkenini onun adıyla değiştir
     private void UpdateHeldItem()
     {
+        GameObject newHeldItem = null;
+
         if (selectedSlotIndex >= 0 && selectedSlotIndex < maxInventorySize && inventorySlots[selectedSlotIndex] != null)
         {
-            heldItem = inventorySlots[selectedSlotIndex].name;
+            newHeldItem = inventorySlots[selectedSlotIndex];
+            heldItem = newHeldItem.name;
         }
         else
         {
-            heldItem = ""; // Eşya yoksa boş bırak
+            heldItem = ""; 
+        }
+
+        if (currentlyShownItem != newHeldItem)
+        {
+            // Eski eşyayı gizle (envantere geri dönmüş gibi davranır)
+            if (currentlyShownItem != null)
+            {
+                currentlyShownItem.SetActive(false);
+            }
+
+            currentlyShownItem = newHeldItem;
+
+            // Yeni eşyayı göster ve kameranın çocuğu yap
+            if (currentlyShownItem != null && playerCamera != null)
+            {
+                currentlyShownItem.SetActive(true);
+                
+                // Eldeyken fizik hareketini ve çarpışmaları engelle
+                Collider[] cols = currentlyShownItem.GetComponentsInChildren<Collider>();
+                foreach (var c in cols) c.enabled = false;
+                
+                Rigidbody[] rbs = currentlyShownItem.GetComponentsInChildren<Rigidbody>();
+                foreach (var r in rbs) r.isKinematic = true;
+
+                // Kameranın çocuğu yap ve belirtilen pozisyona taşı
+                currentlyShownItem.transform.SetParent(playerCamera.transform);
+                currentlyShownItem.transform.localPosition = new Vector3(0.25f, -0.2f, 0.5f); // Biraz sağda ve önde
+                currentlyShownItem.transform.localRotation = Quaternion.identity;
+            }
         }
     }
 }

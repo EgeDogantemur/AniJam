@@ -11,7 +11,7 @@ public class PlayerInteract : MonoBehaviour
     public InputAction interactAction;
 
     private Camera playerCamera;
-    private CollectableObject currentTarget;
+    private IInteractable currentTarget;
 
     void Awake()
     {
@@ -37,11 +37,11 @@ public class PlayerInteract : MonoBehaviour
     {
         CheckForInteractable();
         
-        // Etkileşim tuşuna basıldıysa ve bakılan bir hedef varsa onu topla
+        // Etkileşim tuşuna basıldıysa ve bakılan bir hedef varsa etkileşime gir
         if (interactAction.WasPressedThisFrame() && currentTarget != null)
         {
-            currentTarget.PickUp(this.gameObject);
-            currentTarget = null; // Toplandıktan sonra hedefi temizle
+            currentTarget.Interact(this.gameObject);
+            currentTarget = null; // Etkileşimden sonra hedefi temizle
         }
     }
 
@@ -56,20 +56,20 @@ public class PlayerInteract : MonoBehaviour
         // Raycast'i fırlat
         if (Physics.Raycast(ray, out hit, interactRange))
         {
-            CollectableObject collectable = hit.collider.GetComponent<CollectableObject>();
+            IInteractable interactable = hit.collider.GetComponent<IInteractable>();
 
-            // Eğer yeni bir toplanabilir objeye bakıyorsak
-            if (collectable != null && collectable != currentTarget)
+            // Eğer yeni bir etkileşimli objeye bakıyorsak
+            if (interactable != null && interactable != currentTarget)
             {
                 // Eski hedefin highlight'ını kapat
                 if (currentTarget != null) currentTarget.SetHighlight(false);
                 
                 // Yeni hedefi ata ve highlight'ı aç
-                currentTarget = collectable;
+                currentTarget = interactable;
                 currentTarget.SetHighlight(true);
             }
-            // Eğer toplanabilir olmayan bir objeye bakıyorsak
-            else if (collectable == null && currentTarget != null)
+            // Eğer etkileşilemeyen bir objeye bakıyorsak
+            else if (interactable == null && currentTarget != null)
             {
                 currentTarget.SetHighlight(false);
                 currentTarget = null;

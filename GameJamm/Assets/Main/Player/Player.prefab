@@ -65,7 +65,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
+  near clip plane: 0.15
   far clip plane: 1000
   field of view: 60
   orthographic: 0
@@ -276,7 +276,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6189889595751098488}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: d1ce369ac48ab6b368a395fa411d3bb3, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -388,6 +388,7 @@ MonoBehaviour:
   inventorySlots: []
   selectedSlotIndex: 0
   heldItem: 
+  playerCamera: {fileID: 0}
 --- !u!114 &3432316941434728824
 MonoBehaviour:
   m_ObjectHideFlags: 0
