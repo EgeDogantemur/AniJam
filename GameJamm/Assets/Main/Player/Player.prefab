@@ -242,11 +242,13 @@ GameObject:
   m_Component:
   - component: {fileID: 1879004024592438490}
   - component: {fileID: 1974534369472589104}
+  - component: {fileID: 8602417440293660019}
+  - component: {fileID: 5983385938499783994}
   - component: {fileID: 3432316941434728824}
   - component: {fileID: 2210125267163709680}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -290,6 +292,102 @@ CapsuleCollider:
   m_Height: 1.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!114 &8602417440293660019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6189889595751098488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87c302e29b9caa04aa91ff2771cae0f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteract
+  interactRange: 3
+  interactAction:
+    m_Name: Interact
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: b1c62509-de2e-4a79-bd92-04c74adbf2ed
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: a0a3d95a-9820-43ef-98d5-594f0df96d4b
+      m_Path: <Keyboard>/e
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Interact
+      m_Flags: 0
+    m_Flags: 0
+--- !u!114 &5983385938499783994
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6189889595751098488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d14c7c1aa9c7ba5996052c550ca022f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BasicInventorySystem
+  maxInventorySize: 3
+  changeSlotAction:
+    m_Name: Change Slot
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 8f6d2743-8f05-4c14-bbd6-54d6b274b6b2
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 1D Axis
+      m_Id: 502108e5-150f-4214-aa63-d7d0bf3c679e
+      m_Path: 1DAxis
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Change Slot
+      m_Flags: 4
+    - m_Name: negative
+      m_Id: f6c8547f-c497-41c9-a7b2-abf3313c02dd
+      m_Path: <Mouse>/scroll/up
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Change Slot
+      m_Flags: 8
+    - m_Name: positive
+      m_Id: b86f07f2-d19c-4433-be43-36d17bf5a612
+      m_Path: <Mouse>/scroll/down
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Change Slot
+      m_Flags: 8
+    m_Flags: 0
+  dropItemAction:
+    m_Name: Drop Item
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 4b10a756-d297-433e-8bfd-c115103eacb8
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: fd6e9374-1a0e-4bb2-9a2b-036131c23175
+      m_Path: <Keyboard>/q
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Drop Item
+      m_Flags: 0
+    m_Flags: 0
+  inventorySlots: []
+  selectedSlotIndex: 0
+  heldItem: 
 --- !u!114 &3432316941434728824
 MonoBehaviour:
   m_ObjectHideFlags: 0
