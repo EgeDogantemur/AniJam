@@ -23,11 +23,9 @@ public class Mirror : MonoBehaviour
     public float outlineThickness = 0.02f;
      private GameObject outlineObject;
     private bool isHighlighted = false;
-    private bool isSequenceRunning = false;
     
     // Joint üzerinde duran objeyi takip etmek için
     private GameObject mountedObject = null;
-    private bool isGateOpen = false;
     
     void Start()
     {
@@ -128,194 +126,136 @@ public class Mirror : MonoBehaviour
 
     public void Interact(GameObject interactor)
     {
-        if (isSequenceRunning) return;
-
         BasicInventorySystem inventory = interactor.GetComponent<BasicInventorySystem>();
         if (inventory != null)
         {
-            // 1. DURUM: EĞER JOINT ÜZERİNDE ZATEN BİR EŞYA VARSA, ONU GERİ AL
+            int selIndex = inventory.selectedSlotIndex;
+            GameObject heldObj = null;
+            if (selIndex >= 0 && selIndex < inventory.inventorySlots.Length)
+            {
+                heldObj = inventory.inventorySlots[selIndex];
+            }
+
             if (mountedObject != null)
             {
-                // Envantere girebilmesi ve sonrasında yere atılabilmesi için collider'ı geri aç
-                Collider[] cols = mountedObject.GetComponentsInChildren<Collider>();
-                foreach (var c in cols) c.enabled = true;
+                if (wallObject != null) wallObject.SetActive(true);
 
-                if (inventory.AddItem(mountedObject))
+                if (heldObj == null)
                 {
-                    mountedObject = null;
-                    // Duvarı geri kapatmak için boş parametreyle sekansı çağır
-                    StartCoroutine(MirrorSequence(""));
+                    Collider[] cols = mountedObject.GetComponentsInChildren<Collider>();
+                    foreach (var c in cols) c.enabled = true;
+
+                    if (inventory.AddItem(mountedObject))
+                    {
+                        mountedObject = null;
+                        
+                        foreach (var mItem in mirrorItems)
+                        {
+                            if (mItem.targetObject != null)
+                                mItem.targetObject.SetActive(false);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var c in cols) c.enabled = false;
+                    }
                 }
                 else
                 {
-                    // Envanter doluysa ve eklenemediyse collider'ı tekrar kapat ki orada kalmaya devam etsin
-                    foreach (var c in cols) c.enabled = false;
-                }
-                return;
-            }
+                    string tagToCheck = heldObj.tag;
+                    int matchIndex = GetMirrorItemIndex(tagToCheck);
 
-            // 2. DURUM: JOINT BOŞSA, ENVANTERDEN EŞYA KOYMAYA ÇALIŞ
-            int selIndex = inventory.selectedSlotIndex;
-            if (selIndex >= 0 && selIndex < inventory.inventorySlots.Length)
+                    if (matchIndex != -1)
+                    {
+                        foreach (var mItem in mirrorItems)
+                        {
+                            if (mItem.targetObject != null)
+                                mItem.targetObject.SetActive(false);
+                        }
+                        
+                        if (mirrorItems[matchIndex].targetObject != null)
+                        {
+                            mirrorItems[matchIndex].targetObject.SetActive(true);
+                        }
+
+                        GameObject item = heldObj;
+                        
+                        inventory.inventorySlots[selIndex] = null;
+                        inventory.SetSelectedSlot(selIndex);
+
+                        Collider[] cols = mountedObject.GetComponentsInChildren<Collider>();
+                        foreach (var c in cols) c.enabled = true;
+
+                        GameObject oldMounted = mountedObject;
+                        if (inventory.AddItem(oldMounted))
+                        {
+                            mountedObject = null;
+                        }
+                        
+                        MountObjectToJoint(item);
+
+                        if (wallObject != null) wallObject.SetActive(false);
+                    }
+                }
+            }
+            else
             {
-                // Elimizde tuttuğumuz objeyi bul
-                GameObject heldObj = inventory.inventorySlots[selIndex];
                 if (heldObj != null)
                 {
-                    // BasicInventorySystem'de objenin ismini kullanıyoruz
-                    string tagToCheck = heldObj.name; 
+                    string tagToCheck = heldObj.tag;
+                    int matchIndex = GetMirrorItemIndex(tagToCheck);
 
-                    bool tagMatches = false;
-                    foreach (var item in mirrorItems)
+                    if (matchIndex != -1)
                     {
-                        if (item.targetTag == tagToCheck)
+                        foreach (var mItem in mirrorItems)
                         {
-                            tagMatches = true;
-                            break;
+                            if (mItem.targetObject != null)
+                                mItem.targetObject.SetActive(false);
                         }
-                    }
+                        
+                        if (mirrorItems[matchIndex].targetObject != null)
+                        {
+                            mirrorItems[matchIndex].targetObject.SetActive(true);
+                        }
 
-                    if (tagMatches)
-                    {
-                    // 1. Envanterden eşyayı çıkar ve görseli güncelle
-                    inventory.inventorySlots[selIndex] = null;
-                    inventory.SetSelectedSlot(selIndex); 
-                    
-                    // 2. Eşyayı joint noktasına monte et
-                    heldObj.SetActive(true);
-                    heldObj.transform.SetParent(joint.transform);
-                    heldObj.transform.position = joint.transform.position;
-                    heldObj.transform.rotation = joint.transform.rotation;
-                    
-                    // 3. Rigidbody'lerini kapat ki hareket etmesin
-                    Rigidbody[] rbs = heldObj.GetComponentsInChildren<Rigidbody>();
-                    foreach (var rb in rbs) rb.isKinematic = true;
+                        GameObject item = heldObj;
+                        
+                        inventory.inventorySlots[selIndex] = null;
+                        inventory.SetSelectedSlot(selIndex);
 
-                    // 4. Collider'ını kapat ki tekrar tıkladığımızda alttaki Joint'i (Mirror) algılasın
-                    Collider[] cols = heldObj.GetComponentsInChildren<Collider>();
-                    foreach (var c in cols) c.enabled = false;
+                        MountObjectToJoint(item);
 
-                    mountedObject = heldObj;
-
-                    // 5. Eğer koyduğumuz eşya doğruysa kapı sekansını başlat
-                    if (tagMatches)
-                    {
-                        StartCoroutine(MirrorSequence(tagToCheck));
+                        if (wallObject != null) wallObject.SetActive(false);
                     }
                 }
             }
         }
     }
+
+    private int GetMirrorItemIndex(string tag)
+    {
+        for (int i = 0; i < mirrorItems.Length; i++)
+        {
+            if (mirrorItems[i].targetTag == tag)
+            {
+                return i;
+            }
+        }
+        return -1;
     }
 
-    private IEnumerator MirrorSequence(string matchingTag)
+    private void MountObjectToJoint(GameObject item)
     {
-        isSequenceRunning = true;
-        SetHighlight(false); // Etkileşim başlayınca outline'ı kapat
-
-        bool isClosing = string.IsNullOrEmpty(matchingTag);
-
-        if (!isClosing)
-        {
-            // AÇILMA SEKANSI (Eşya koyuldu)
-
-            // 1. wallObject belirmeli (Aşağıdan yukarı kayarak)
-            if (wallObject != null)
-            {
-                wallObject.SetActive(true);
-                yield return StartCoroutine(SlideObject(wallObject, true, 0.5f));
-            }
-
-            // 2. diğer tüm arraydeki objeler gizlenmeli
-            foreach (var item in mirrorItems)
-            {
-                if (item.targetObject != null)
-                {
-                    item.targetObject.SetActive(false);
-                }
-            }
-
-            // 3. tagi heldObject ile eşleşen obje ortaya çıkmalı
-            yield return new WaitForSeconds(0.25f); 
-            
-            foreach (var item in mirrorItems)
-            {
-                if (item.targetTag == matchingTag && item.targetObject != null)
-                {
-                    item.targetObject.SetActive(true);
-                }
-            }
-
-            // 4. ardından wallObject yavaşça gizlenmeli
-            yield return new WaitForSeconds(0.5f); 
-            
-            if (wallObject != null)
-            {
-                // Yavaşça aşağı kayarak kaybolma efekti
-                yield return StartCoroutine(SlideObject(wallObject, false, 1f));
-                wallObject.SetActive(false);
-            }
-
-            isGateOpen = true;
-        }
-        else
-        {
-            // KAPANMA SEKANSI (Eşya geri alındı)
-            if (!isGateOpen) { isSequenceRunning = false; yield break; } // Zaten kapalıysa çık
-
-            // 1. wallObject yukarı kayarak kapıyı kapatır
-            if (wallObject != null)
-            {
-                wallObject.SetActive(true);
-                yield return StartCoroutine(SlideObject(wallObject, true, 0.5f));
-            }
-
-            // 2. Açılmış olan targetObject'i tekrar gizle
-            foreach (var item in mirrorItems)
-            {
-                if (item.targetObject != null)
-                {
-                    item.targetObject.SetActive(false);
-                }
-            }
-            
-            // Kapı kapalı kalmaya devam eder, sekans biter
-            isGateOpen = false;
-        }
-
-        isSequenceRunning = false;
-    }
-
-    private IEnumerator SlideObject(GameObject obj, bool isAppearing, float duration)
-    {
-        // Objenin boyunu bulup o kadar aşağı kaydıracağız. Collider yoksa varsayılan 5 birim.
-        Collider col = obj.GetComponent<Collider>();
-        float dropDistance = col != null ? col.bounds.size.y + 0.5f : 5f;
+        mountedObject = item;
+        mountedObject.SetActive(true);
+        mountedObject.transform.SetParent(joint.transform);
+        mountedObject.transform.position = joint.transform.position;
+        mountedObject.transform.rotation = joint.transform.rotation;
         
-        Vector3 originalPos = obj.transform.position;
-        Vector3 hiddenPos = originalPos + Vector3.down * dropDistance;
+        Rigidbody[] rbs = mountedObject.GetComponentsInChildren<Rigidbody>();
+        foreach (var rb in rbs) rb.isKinematic = true;
 
-        Vector3 startPos = isAppearing ? hiddenPos : originalPos;
-        Vector3 endPos = isAppearing ? originalPos : hiddenPos;
-
-        obj.transform.position = startPos;
-
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            t = t * t * (3f - 2f * t); 
-            
-            obj.transform.position = Vector3.Lerp(startPos, endPos, t);
-            yield return null;
-        }
-
-        obj.transform.position = endPos;
-
-        if (!isAppearing)
-        {
-            obj.transform.position = originalPos;
-        }
+        Collider[] cols = mountedObject.GetComponentsInChildren<Collider>();
+        foreach (var c in cols) c.enabled = false;
     }
 }

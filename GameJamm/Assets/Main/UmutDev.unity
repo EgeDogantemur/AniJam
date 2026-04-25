@@ -4493,6 +4493,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 159836975893670436, guid: dc968270071017fe5915279561023827, type: 3}
+      propertyPath: mirrorItems.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 159836975893670436, guid: dc968270071017fe5915279561023827, type: 3}
+      propertyPath: mirrorItems.Array.data[0].targetTag
+      value: Respawn
+      objectReference: {fileID: 0}
+    - target: {fileID: 159836975893670436, guid: dc968270071017fe5915279561023827, type: 3}
+      propertyPath: mirrorItems.Array.data[1].targetTag
+      value: Finish
+      objectReference: {fileID: 0}
+    - target: {fileID: 159836975893670436, guid: dc968270071017fe5915279561023827, type: 3}
+      propertyPath: mirrorItems.Array.data[0].targetObject
+      value: 
+      objectReference: {fileID: 1585338468}
+    - target: {fileID: 159836975893670436, guid: dc968270071017fe5915279561023827, type: 3}
+      propertyPath: mirrorItems.Array.data[1].targetObject
+      value: 
+      objectReference: {fileID: 1612624580}
     - target: {fileID: 2808764531864857313, guid: dc968270071017fe5915279561023827, type: 3}
       propertyPath: m_Name
       value: Mirror
