@@ -31,6 +31,10 @@ public class Mirror : MonoBehaviour
     
     // Joint üzerinde duran objeyi takip etmek için
     private GameObject mountedObject = null;
+
+    [Header("Ses Ayarları")]
+    public AudioSource audioSource;
+    public AudioClip triggerSound;
     
     void Start()
     {
@@ -166,6 +170,11 @@ public class Mirror : MonoBehaviour
                         {
                             if (interactedJoint == jointA && mItem.targetObjectA != null) mItem.targetObjectA.SetActive(false);
                             if (interactedJoint == jointB && mItem.targetObjectB != null) mItem.targetObjectB.SetActive(false);
+                            
+                            if (audioSource != null && triggerSound != null)
+                            {
+                                audioSource.PlayOneShot(triggerSound);
+                            }
                         }
                     }
                     else
@@ -184,6 +193,11 @@ public class Mirror : MonoBehaviour
                         {
                             if (interactedJoint == jointA && mItem.targetObjectA != null) mItem.targetObjectA.SetActive(false);
                             if (interactedJoint == jointB && mItem.targetObjectB != null) mItem.targetObjectB.SetActive(false);
+                            
+                            if (audioSource != null && triggerSound != null)
+                            {
+                                audioSource.PlayOneShot(triggerSound);
+                            }
                         }
                         
                         if (interactedJoint == jointA && mirrorItems[matchIndex].targetObjectA != null)
@@ -228,6 +242,11 @@ public class Mirror : MonoBehaviour
                         {
                             if (interactedJoint == jointA && mItem.targetObjectA != null) mItem.targetObjectA.SetActive(false);
                             if (interactedJoint == jointB && mItem.targetObjectB != null) mItem.targetObjectB.SetActive(false);
+
+                            if (audioSource != null && triggerSound != null)
+                            {
+                                audioSource.PlayOneShot(triggerSound);
+                            }
                         }
                         
                         if (interactedJoint == jointA && mirrorItems[matchIndex].targetObjectA != null)
