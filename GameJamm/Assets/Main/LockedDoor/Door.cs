@@ -2,43 +2,143 @@ using UnityEngine;
 
 public class Door : MonoBehaviour
 {
-    private Collider col;
+    [Header("Door Ayarları")]
+    [SerializeField] private float openAngle = 120f;
+    [Header("Lock Ayarları")]
+    [Tooltip("Collider'ı olan ve etkileşime girilecek kilit objesi")]
+    public GameObject lockObject;
+    [Tooltip("Kilidi açmak için gereken objenin Tag'i")]
+    public string keyTag = "Key";
+
+    [Header("Outline Ayarları")]
+    public Color outlineColor = Color.yellow;
+    [Range(0f, 0.1f)]
+    public float outlineThickness = 0.02f;
+    private GameObject outlineObject;
+    private bool isHighlighted = false;
+    
+    private bool isUnlocked = false;
 
     private void Start()
     {
-        col = GetComponent<Collider>();
+        outlineObject = SetupLock(lockObject);
     }
 
-    public void OpenDoor()
+    private GameObject SetupLock(GameObject currentLock)
     {
-        col.enabled = false;
-        transform.Rotate(0, 90, 0);
-    }
+        if (currentLock == null) return null;
+        
+        // Kilit objesinin üzerine IInteractable arayüzünü ekleyerek PlayerInteract'a görünür yapıyoruz
+        DoorInteractable interactable = currentLock.AddComponent<DoorInteractable>();
+        interactable.parentDoor = this;
 
-    public void CloseDoor()
-    {
-        col.enabled = true;
-        transform.Rotate(0, -90, 0);
-    }
+        Collider lockCol = currentLock.GetComponent<Collider>();
+        if (lockCol == null) return null;
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
+        GameObject newOutline = new GameObject("OutlineEffect");
+        newOutline.transform.SetParent(currentLock.transform, false);
+        newOutline.transform.localPosition = Vector3.zero;
+        newOutline.transform.localRotation = Quaternion.identity;
+        newOutline.transform.localScale = Vector3.one;
+
+        // Çizgi (Edge) outline için LineRenderer kullanıyoruz
+        LineRenderer lr = newOutline.AddComponent<LineRenderer>();
+        lr.useWorldSpace = false;
+        lr.startWidth = outlineThickness;
+        lr.endWidth = outlineThickness;
+        lr.positionCount = 16;
+        
+        Shader unlit = Shader.Find("HDRP/Unlit") ?? Shader.Find("Unlit/Color");
+        if (unlit != null)
         {
-            OpenDoor();
+            Material outlineMat = new Material(unlit);
+            if (outlineMat.HasProperty("_BaseColor")) outlineMat.SetColor("_BaseColor", outlineColor);
+            if (outlineMat.HasProperty("_Color")) outlineMat.SetColor("_Color", outlineColor);
+            lr.material = outlineMat;
         }
-        if (other.GetComponentInParent<PlayerController>())
+
+        Vector3 center = Vector3.zero;
+        Vector3 size = Vector3.one;
+
+        if (lockCol is BoxCollider box)
         {
-            OpenDoor();
+            center = box.center;
+            size = box.size;
         }
-        Debug.Log(other.tag);
+        else if (lockCol is SphereCollider sphere)
+        {
+            center = sphere.center;
+            size = Vector3.one * (sphere.radius * 2f);
+        }
+        else if (lockCol is CapsuleCollider capsule)
+        {
+            center = capsule.center;
+            float d = capsule.radius * 2f;
+            float h = capsule.height;
+            if (capsule.direction == 0) size = new Vector3(h, d, d);
+            else if (capsule.direction == 1) size = new Vector3(d, h, d);
+            else if (capsule.direction == 2) size = new Vector3(d, d, h);
+        }
+        else if (lockCol is MeshCollider meshCol && meshCol.sharedMesh != null)
+        {
+            center = meshCol.sharedMesh.bounds.center;
+            size = meshCol.sharedMesh.bounds.size;
+        }
+
+        Vector3 extents = size / 2f;
+        Vector3[] corners = new Vector3[8];
+        corners[0] = center + new Vector3(-extents.x, -extents.y, -extents.z);
+        corners[1] = center + new Vector3(-extents.x, -extents.y,  extents.z);
+        corners[2] = center + new Vector3( extents.x, -extents.y,  extents.z);
+        corners[3] = center + new Vector3( extents.x, -extents.y, -extents.z);
+        corners[4] = center + new Vector3(-extents.x,  extents.y, -extents.z);
+        corners[5] = center + new Vector3(-extents.x,  extents.y,  extents.z);
+        corners[6] = center + new Vector3( extents.x,  extents.y,  extents.z);
+        corners[7] = center + new Vector3( extents.x,  extents.y, -extents.z);
+
+        // Küpün 12 ayrı kenarını tek bir çizgide çizmek için gereken düğüm sırası
+        int[] path = { 0, 1, 2, 3, 0, 4, 5, 1, 5, 6, 2, 6, 7, 3, 7, 4 };
+        for (int i = 0; i < 16; i++)
+        {
+            lr.SetPosition(i, corners[path[i]]);
+        }
+
+        newOutline.SetActive(false);
+        return newOutline;
     }
 
-    private void OnTriggerExit(Collider other)
+    public void SetHighlightForLock(bool state)
     {
-        if (other.CompareTag("Player"))
+        if (isHighlighted == state) return;
+        isHighlighted = state;
+        if (outlineObject != null) outlineObject.SetActive(state);
+    }
+
+    public void InteractWithLock(GameObject interactor)
+    {
+        if (isUnlocked) return; // Zaten açıksa tekrar etkileşime girmesin
+
+        BasicInventorySystem inventory = interactor.GetComponent<BasicInventorySystem>();
+        if (inventory != null)
         {
-            CloseDoor();
+            int selIndex = inventory.selectedSlotIndex;
+            GameObject heldObj = null;
+            if (selIndex >= 0 && selIndex < inventory.inventorySlots.Length)
+            {
+                heldObj = inventory.inventorySlots[selIndex];
+            }
+
+            if (heldObj != null && heldObj.tag == keyTag)
+            {
+                // Anahtar doğru, kilidi aç ve kapıyı aç
+                isUnlocked = true;
+                transform.Rotate(0, openAngle, 0);
+                
+                // İsteğe bağlı olarak anahtarı envanterden silmek istersen şu yorum satırlarını açabilirsin:
+                // inventory.inventorySlots[selIndex] = null;
+                // inventory.SetSelectedSlot(selIndex);
+                // Destroy(heldObj);
+            }
         }
     }
 }
