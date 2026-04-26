@@ -259,8 +259,8 @@ Material:
     - _ZTestTransparent: 4
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.2245282, g: 1, b: 0.23265378, a: 1}
-    - _Color: {r: 0.22452813, g: 1, b: 0.23265374, a: 1}
+    - _BaseColor: {r: 0.26778916, g: 0.7132075, b: 0.27228835, a: 1}
+    - _Color: {r: 0.26778913, g: 0.7132074, b: 0.2722883, a: 1}
     - _DiffusionProfileAsset: {r: 0, g: 0, b: 0, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
