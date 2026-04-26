@@ -19,6 +19,10 @@ public class Door : MonoBehaviour
     
     private bool isUnlocked = false;
 
+    [Header("Ses Ayarları")]
+    public AudioSource audioSource;
+    public AudioClip triggerSound;
+
     private void Start()
     {
         outlineObject = SetupLock(lockObject);
@@ -127,6 +131,11 @@ public class Door : MonoBehaviour
             isUnlocked = true;
             transform.Rotate(0, openAngle, 0);
             inv.inventorySlots[inv.selectedSlotIndex] = null;
+
+            if (audioSource != null && triggerSound != null)
+            {
+                audioSource.PlayOneShot(triggerSound);
+            }
         }
     }
 }
