@@ -105,7 +105,7 @@ public class PlayerController : MonoBehaviour
         sprintAction.canceled += ctx => isSprinting = false;
 
         // Eğilme (C) - Toggle (Aç/Kapa) mantığıyla
-        crouchAction = new InputAction("Crouch", InputActionType.Button, "<Keyboard>/c");
+        crouchAction = new InputAction("Crouch", InputActionType.Button, "<Keyboard>/leftCtrl");
         crouchAction.performed += ctx => ToggleCrouch();
     }
 
