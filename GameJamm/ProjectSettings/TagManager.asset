@@ -9,6 +9,7 @@ TagManager:
   - OrangeJam
   - BlueGem
   - PinkGem
+  - Key
   layers:
   - Default
   - TransparentFX
