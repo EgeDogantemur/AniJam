@@ -7,6 +7,8 @@ TagManager:
   - GreenGem
   - RedGem
   - OrangeJam
+  - BlueGem
+  - PinkGem
   layers:
   - Default
   - TransparentFX
