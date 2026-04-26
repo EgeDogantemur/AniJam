@@ -242,6 +242,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1879004024592438490}
   - component: {fileID: 1974534369472589104}
+  - component: {fileID: 2389922536576763235}
   - component: {fileID: 8602417440293660019}
   - component: {fileID: 5983385938499783994}
   - component: {fileID: 3432316941434728824}
@@ -292,6 +293,19 @@ CapsuleCollider:
   m_Height: 1.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!114 &2389922536576763235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6189889595751098488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da37760b38781b563b8d0e3fcdb02fe6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerKiller
+  enemyTag: Enemy
 --- !u!114 &8602417440293660019
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -418,6 +432,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   groundCheckDistance: 0.15
+  inRoom: 0
 --- !u!54 &2210125267163709680
 Rigidbody:
   m_ObjectHideFlags: 0
