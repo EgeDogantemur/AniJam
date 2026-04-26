@@ -236,8 +236,6 @@ public class EnemyUmut : MonoBehaviour
             currentState = EnemyState.Investigating;
             investigateTimer = 0f;
         }
-
-        Debug.Log("Can see player: " + canSeePlayerViaRay);
     }
 
     private void HandleChasing()
