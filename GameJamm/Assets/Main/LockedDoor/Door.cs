@@ -118,27 +118,15 @@ public class Door : MonoBehaviour
     {
         if (isUnlocked) return; // Zaten açıksa tekrar etkileşime girmesin
 
-        BasicInventorySystem inventory = interactor.GetComponent<BasicInventorySystem>();
-        if (inventory != null)
-        {
-            int selIndex = inventory.selectedSlotIndex;
-            GameObject heldObj = null;
-            if (selIndex >= 0 && selIndex < inventory.inventorySlots.Length)
-            {
-                heldObj = inventory.inventorySlots[selIndex];
-            }
+        if (interactor.GetComponent<BasicInventorySystem>() == null) return;
 
-            if (heldObj != null && heldObj.tag == keyTag)
-            {
-                // Anahtar doğru, kilidi aç ve kapıyı aç
-                isUnlocked = true;
-                transform.Rotate(0, openAngle, 0);
-                
-                // İsteğe bağlı olarak anahtarı envanterden silmek istersen şu yorum satırlarını açabilirsin:
-                // inventory.inventorySlots[selIndex] = null;
-                // inventory.SetSelectedSlot(selIndex);
-                // Destroy(heldObj);
-            }
+        BasicInventorySystem inv = interactor.GetComponent<BasicInventorySystem>();
+        
+        if (inv.inventorySlots[inv.selectedSlotIndex].CompareTag(keyTag))
+        {
+            isUnlocked = true;
+            transform.Rotate(0, openAngle, 0);
+            inv.inventorySlots[inv.selectedSlotIndex] = null;
         }
     }
 }
